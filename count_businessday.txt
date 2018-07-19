@@ -1,0 +1,73 @@
+select YearMonth,count(*)
+from (
+select date_format(created,'%Y-%b') YearMonth, 	t.id, created, time_closed,
+		TIMESTAMPDIFF(second, created, time_closed) / (24 * 60 * 60)  days_diff_all,
+		((WEEK(time_closed) - WEEK(created)) * 2) -
+        (case when weekday(time_closed) = 6 then 1 else 0 end) -
+        (case when weekday(created) = 5 then 1 else 0 end) weekends,
+         (SELECT COUNT(*) 
+          FROM (
+			SELECT '2018-01-01' holiday
+			UNION 
+            SELECT '2018-01-15'
+            UNION 
+			SELECT '2018-02-19'
+			UNION 
+			SELECT '2018-05-28'
+			UNION 
+			SELECT '2018-07-04'
+			UNION 
+			SELECT '2018-09-03'
+			UNION 
+			SELECT '2018-11-22'
+			UNION 
+			SELECT '2018-12-25') holidays
+         WHERE holiday>=t.created and holiday<=t.time_closed) holidays, 
+        TIMESTAMPDIFF(second, created, time_closed) / (24 * 60 * 60) -
+		((WEEK(time_closed) - WEEK(created)) * 2) -
+        (case when weekday(time_closed) = 6 then 1 else 0 end) -
+        (case when weekday(created) = 5 then 1 else 0 end) -
+         (SELECT COUNT(*) 
+          FROM (
+			SELECT '2018-01-01' holiday
+			UNION 
+            SELECT '2018-01-15'
+            UNION 
+			SELECT '2018-02-19'
+			UNION 
+			SELECT '2018-05-28'
+			UNION 
+			SELECT '2018-07-04'
+			UNION 
+			SELECT '2018-09-03'
+			UNION 
+			SELECT '2018-11-22'
+			UNION 
+			SELECT '2018-12-25') holiday
+         WHERE holiday>=t.created and holiday<=t.time_closed) business_days,
+         TIMESTAMPDIFF(MINUTE,created,time_closed)/1440 length, 
+         ((TIMESTAMPDIFF(second, created, time_closed) / (24 * 60 * 60) -
+		((WEEK(time_closed) - WEEK(created)) * 2) -
+        (case when weekday(time_closed) = 6 then 1 else 0 end) -
+        (case when weekday(created) = 5 then 1 else 0 end) -
+         (SELECT COUNT(*) 
+          FROM (
+			SELECT '2018-01-01' holiday
+			UNION 
+            SELECT '2018-01-15'
+            UNION 
+			SELECT '2018-02-19'
+			UNION 
+			SELECT '2018-05-28'
+			UNION 
+			SELECT '2018-07-04'
+			UNION 
+			SELECT '2018-09-03'
+			UNION 
+			SELECT '2018-11-22'
+			UNION 
+			SELECT '2018-12-25') holiday
+         WHERE holiday>=t.created and holiday<=t.time_closed))*1440)/1440 length_business_days 
+from 	HD_TICKET t
+)a
+group by a.yearmonth

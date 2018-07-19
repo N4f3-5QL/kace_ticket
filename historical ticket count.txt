@@ -1,0 +1,15 @@
+select date_format(created,'%Y%m') 'SORTID', date_format(created,'%Y-%b') 'YEAR_MONTH', avg(created1) 'CREATED', avg(resolved) 'RESOLVED', 
+from (
+SELECT 	DATE(T.created) created, COUNT(*) CREATED1, 
+		(SELECT COUNT(*) 
+        FROM 	HD_TICKET 
+        WHERE 	DATE(created)=DATE(T.created)
+        AND 	DATE(time_closed)=DATE(created)) RESOLVED,
+        (SELECT COUNT(*) 
+        FROM 	HD_TICKET HD, HD_STATUS S 
+		WHERE 	DATE(HD.created)=DATE(T.created)
+        AND 	HD.HD_STATUS_ID = S.ID  
+		AND 	(DATE(HD.time_closed) > DATE(HD.created) OR S.state IN ('opened'))) UN_RESOLVED
+from 	ORG1.HD_TICKET T  
+GROUP BY DATE(T.created)
+)a group by date_format(created,'%Y-%b');

@@ -1,0 +1,29 @@
+SELECT 
+    DATE(T.created) created,
+    DAYNAME(T.created) W,
+    COUNT(*) CREATED_TICKET,
+    (SELECT 
+            COUNT(*)
+        FROM
+            HD_TICKET
+        WHERE
+            DATE(created) = DATE(T.created)
+                AND DATE(time_closed) = DATE(created)) RESOLVED_TICKET,
+    (SELECT 
+            COUNT(*)
+        FROM
+            HD_TICKET HD,
+            HD_STATUS S
+        WHERE
+            DATE(HD.created) = DATE(T.created)
+                AND HD.HD_STATUS_ID = S.ID
+                AND (DATE(HD.time_closed) > DATE(HD.created)
+                OR S.state IN ('opened'))) UNRESOLVED_TICKET
+FROM
+    ORG1.HD_TICKET T
+WHERE
+DATE(created) = DATE(NOW())
+  and  WEEK(created) = WEEK(NOW())
+        AND YEAR(created) = YEAR(NOW())
+GROUP BY DATE(T.CREATED) , DAYNAME(T.created)
+ORDER BY T.created ASC
